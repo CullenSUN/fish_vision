@@ -7,3 +7,5 @@ We are building the vision system for a very fast robotic fish. Target to avoid 
 - Raspberry Pi Camera V2
 
 ## Software
+
+- writing
