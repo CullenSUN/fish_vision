@@ -1,23 +1,29 @@
 import picamera
 import os
 import datetime as dt
+from pathlib import Path
+
+file_directory = '/home/pi/Desktop/videos'
+max_num_files = 5
+
+def delete_old_files():
+    paths = sorted(Path(file_directory).iterdir(), key=os.path.getmtime, reverse=True)
+    for file in paths[max_num_files-1:]:
+        print(f'removing file at {file}')
+        os.remove(file)
 
 def main():    
-    file_directory = '/home/pi/Desktop/videos'
-    print('Hello fish!')
     with picamera.PiCamera() as camera:
         camera.resolution = (1280, 720)
         camera.framerate = 60
-        camera.start_preview()
+        while True:
+            delete_old_files()
 
-        filename = os.path.join(file_directory, dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S.h264'))
-        camera.start_recording(filename)
-        # camera.start_recording('lowres.h264', splitter_port=2, resize=(320, 240))
-        camera.wait_recording(30)
-        # camera.stop_recording(splitter_port=2)
-        camera.stop_recording()
+            filename = os.path.join(file_directory, dt.datetime.now().strftime('%Y-%m-%d_%H.%M.%S.h264'))
+            camera.start_recording(filename)
+            camera.wait_recording(30)
+            camera.stop_recording()
 
-        camera.stop_preview()
 
 if __name__ == '__main__':
     main()
