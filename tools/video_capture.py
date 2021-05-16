@@ -13,9 +13,7 @@ def delete_old_files():
         os.remove(file)
 
 def main():    
-    with picamera.PiCamera() as camera:
-        camera.resolution = (1280, 720)
-        camera.framerate = 60
+    with picamera.PiCamera(resolution=(1280, 720), framerate=60) as camera:
         while True:
             delete_old_files()
 
