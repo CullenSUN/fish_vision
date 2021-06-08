@@ -8,4 +8,7 @@ We are building the vision system for a very fast robotic fish. Target to avoid 
 
 ## Software
 
-- writing
+- [Ubuntu 16.04](https://ubiquity-pi-image.sfo2.cdn.digitaloceanspaces.com/2020-11-07-ubiquity-xenial-lxde-raspberry-pi.img.xz)
+- ROS Kinetic 
+- Python 2.7.12
+- OpenCV (cv2) 3.3.1
