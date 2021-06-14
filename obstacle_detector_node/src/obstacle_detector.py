@@ -33,7 +33,7 @@ class ObstacleDetector:
     def callback(self, data):
         try:
             cv_image = self.bridge.compressed_imgmsg_to_cv2(data)
-
+            process_image(cv_image)
         except CvBridgeError as e:
             print(e)
 
@@ -63,7 +63,7 @@ class ObstacleDetector:
 
             if not is_contained: 
                 valid_rects.append(rect_i)
-
+        print("publishing obstacles: ", len(valid_rects))
         self.obstacles_pub.publish(valid_rects)
 
 
