@@ -37,7 +37,7 @@ class ObstacleDetector:
         except CvBridgeError as e:
             print(e)
 
-        print("image shape is", cv_image.shape)
+        # print("image shape is", cv_image.shape)
 
     def process_image(self, img): 
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
