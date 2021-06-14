@@ -45,7 +45,7 @@ def process(img):
 
 cv2.namedWindow('Contours', cv2.WINDOW_NORMAL)
 
-raw = cv2.VideoCapture('videos/dolphin.mov')
+raw = cv2.VideoCapture('videos/turtle.mov')
 
 # Read until video is completed
 while(raw.isOpened()):
