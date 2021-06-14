@@ -5,7 +5,7 @@ SUBSCRIBES TO:
     /obstacle_detector_node/obstacles: detected cordinates of obstacles
 
 """
-
+import sys
 import rospy
 from opencv_apps.msg import RectArray
 
@@ -21,10 +21,12 @@ class ObstacleAvoidance:
 
 
 def main(args):
-    od = ObstacleAvoidance()
-    rospy.init_node('obstacle_avoidance_node', anonymous=True)
+    ov = ObstacleAvoidance()
+    rospy.init_node('obstacle_avoidance_node', anonymous=True) 
     try:
         rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down")
-    
+   
+if __name__ == '__main__':
+    main(sys.argv)

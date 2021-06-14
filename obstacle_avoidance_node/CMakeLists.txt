@@ -8,7 +8,6 @@ project(obstacle_avoidance_node)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  opencv_apps
   rospy
 )
 
@@ -104,7 +103,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES obstacle_avoidance_node
-#  CATKIN_DEPENDS opencv_apps rospy
+#  CATKIN_DEPENDS rospy
 #  DEPENDS system_lib
 )
 
