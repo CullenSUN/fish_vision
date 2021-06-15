@@ -24,9 +24,9 @@ def rect_contains(rect1, rect2):
     x2, y2, w2, h2 = rect2
     return x1 <= x2 and y1 <= y2 and x1+w1 >= x2+w2 and y1+h1 >= y2+h2 
 
-class VisionDebugger:
+WINDOW_NAME = "BREED Fish Vision"
 
-    WINDOW_NAME = "BREED Fish Vision"
+class VisionDebugger:
 
     def __init__(self):
         cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
@@ -47,12 +47,12 @@ class VisionDebugger:
             img = self.bridge.compressed_imgmsg_to_cv2(data)
             cv2.imshow(WINDOW_NAME, img)
             self.image_buffer = img
+            print("received image", image.shape)
         except CvBridgeError as e:
             print(e)
 
-        # print("image shape is", cv_image.shape)
-
     def callback_rects(self, rects_msg):
+        print("received rects %s" % len(rects_msg.rects))
         if self.image_buffer is None: return
 
         img = image_buffer
