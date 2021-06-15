@@ -65,7 +65,7 @@ class ObstacleDetector:
             if not is_contained:
                 msg_rect = Rect(*rect_i)
                 rects_msg.rects.append(msg_rect)
-        print("publishing obstacles: ", rects_msg)
+        print("number of rects published: %s" % len(rects_msg.rects))
         self.obstacles_pub.publish(rects_msg)
 
 

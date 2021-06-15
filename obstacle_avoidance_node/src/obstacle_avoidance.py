@@ -16,7 +16,7 @@ class ObstacleAvoidance:
 
     def callback(self, rects_msg):
         rect_array = rects_msg.rects
-        print("number of rects: ", len(rect_array))
+        print("number of rects received: %s" % len(rect_array))
         if len(rect_array) > 0: 
             print("first rect", rect_array[0])
 
