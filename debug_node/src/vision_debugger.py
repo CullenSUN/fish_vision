@@ -29,7 +29,6 @@ WINDOW_NAME = "BREED Fish Vision"
 class VisionDebugger:
 
     def __init__(self):
-        cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
         self.bridge = CvBridge()
         self.image_buffer = None
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback_image)
@@ -37,12 +36,16 @@ class VisionDebugger:
 
         self.obstacles_pub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback_rects)
         print("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
+       
+        cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
         
     def __del__(self):
         print('VisionDebugger destructor called, Employee deleted.')
         cv2.destroyAllWindows()
 
     def callback_image(self, data):
+        print("received image first line")
+
         try:
             img = self.bridge.compressed_imgmsg_to_cv2(data)
             cv2.imshow(WINDOW_NAME, img)
