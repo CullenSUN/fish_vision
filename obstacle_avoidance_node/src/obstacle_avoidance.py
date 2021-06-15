@@ -14,7 +14,7 @@ class ObstacleAvoidance:
         self.obstacles_sub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback)
         print("ObstacleAvoidance subscribed to topic /obstacle_detector_node/obstacles")
 
-    def callback(rect_array):
+    def callback(self, rect_array):
         print("number of rects: ", len(rect_array))
         if len(rect_array) > 0: 
             print("first rect", rect_array[0])
