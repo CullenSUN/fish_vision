@@ -15,6 +15,7 @@ import rospy
 
 from sensor_msgs.msg import CompressedImage
 from opencv_apps.msg import RectArray
+from opencv_apps.msg import Rect
 from cv_bridge import CvBridge, CvBridgeError
 
 def rect_contains(rect1, rect2):
@@ -61,8 +62,9 @@ class ObstacleDetector:
                     is_contained = True
                     break
 
-            if not is_contained: 
-                valid_rects.append(rect_i)
+            if not is_contained:
+                msg_rect = Rect(rect_i)
+                valid_rects.append(msg_rect)
         print("publishing obstacles: ", len(valid_rects))
         self.obstacles_pub.publish(valid_rects)
 
