@@ -53,7 +53,7 @@ class ObstacleDetector:
             bounding_rects.append(rect)
 
         # ignore those rects that are completely contained by other bigger rects
-        valid_rects = []
+        rects_msg = RectArray()
         for i, rect_i in enumerate(bounding_rects):
             is_contained = False
             for j, rect_j in enumerate(bounding_rects):
@@ -64,9 +64,9 @@ class ObstacleDetector:
 
             if not is_contained:
                 msg_rect = Rect(*rect_i)
-                valid_rects.append(msg_rect)
-        print("publishing obstacles: ", len(valid_rects))
-        self.obstacles_pub.publish(valid_rects)
+                rects_msg.rects.append(msg_rect)
+        print("publishing obstacles: ", rects_msg)
+        self.obstacles_pub.publish(rects_msg)
 
 
 def main(args):
