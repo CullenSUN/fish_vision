@@ -40,7 +40,7 @@ class VisionDebugger:
 
         # draw obstacle rects in the image
         if self.obstacle_rects_buffer is not None: 
-            for rect in rect_array:
+            for rect in self.obstacle_rects_buffer :
                 x, y, w, h = rect
                 cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
