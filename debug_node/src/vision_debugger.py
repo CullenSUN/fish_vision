@@ -42,6 +42,9 @@ class VisionDebugger:
         # draw obstacle rects in the image
         if self.obstacle_rects_buffer is not None: 
             for rect in self.obstacle_rects_buffer:
+                #ignore very small rects
+                if rect.width * rect.height < 16.0: continue 
+                
                 start_point = (int(rect.x), int(rect.y))
                 end_point = (int(rect.x + rect.width), int(rect.y + rect.height))
                 cv2.rectangle(img, start_point, end_point, (0, 255, 0), 2)
