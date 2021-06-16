@@ -12,3 +12,9 @@ We are building the vision system for a very fast robotic fish. Target to avoid 
 - ROS Kinetic 
 - Python 2.7.12
 - OpenCV (cv2) 3.3.1
+
+## How to run
+- ```roslaunch raspicam_node camerav2_410x308_30fps.launch```
+- ```rosrun obstacle_detector_node obstacle_detector.py```
+- ```rosrun obstacle_avoidance_node obstacle_avoidance.py```
+- ```rosrun debug_node vision_debugger.py```
