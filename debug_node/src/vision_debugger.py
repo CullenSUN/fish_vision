@@ -15,6 +15,7 @@ import cv2
 import rospy
 
 from sensor_msgs.msg import CompressedImage
+from opencv_apps.msg import Rect
 from opencv_apps.msg import RectArray
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -41,8 +42,7 @@ class VisionDebugger:
         # draw obstacle rects in the image
         if self.obstacle_rects_buffer is not None: 
             for rect in self.obstacle_rects_buffer :
-                x, y, w, h = rect
-                cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                cv2.rectangle(img, (rect.x, rect.y), (rect.x + rect.width, rect.y + rect.height), (0, 255, 0), 2)
 
         cv2.imshow(WINDOW_NAME, img)
         cv2.waitKey(24)
