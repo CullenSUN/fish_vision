@@ -26,6 +26,7 @@ class VisionDebugger:
     def __init__(self):
         self.bridge = CvBridge()
         self.obstacle_rects_buffer = None
+        self.throttling_counter = 0
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback_image)
         print("VisionDebugger subscribed to topic /raspicam_node/image/compressed")
 
@@ -33,7 +34,12 @@ class VisionDebugger:
         print("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
 
     def callback_image(self, data):
-        print("received image")
+        if self.throttling_counter % 5 != 0:
+            print("drop received image")
+            return
+
+        print("draw image")
+
         try:
             img = self.bridge.compressed_imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
@@ -51,6 +57,11 @@ class VisionDebugger:
 
         cv2.imshow(WINDOW_NAME, img)
         cv2.waitKey(24)
+
+        # throttling logic
+        self.throttling_counter += 1
+        if self.throttling_counter >= 5:
+            self.throttling_counter = 0
 
     def callback_rects(self, rects_msg):
         print("received obstacle rects %s" % len(rects_msg.rects))
