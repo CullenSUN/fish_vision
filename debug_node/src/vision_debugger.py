@@ -33,8 +33,15 @@ class VisionDebugger:
         self.obstacles_pub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback_rects)
         print("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
 
+
+    def increase_counter(self):
+        self.throttling_counter += 1
+        if self.throttling_counter >= 5:
+            self.throttling_counter = 0
+
     def callback_image(self, data):
         if self.throttling_counter % 5 != 0:
+            increase_counter()
             print("drop received image")
             return
 
@@ -57,11 +64,7 @@ class VisionDebugger:
 
         cv2.imshow(WINDOW_NAME, img)
         cv2.waitKey(24)
-
-        # throttling logic
-        self.throttling_counter += 1
-        if self.throttling_counter >= 5:
-            self.throttling_counter = 0
+        increase_counter()
 
     def callback_rects(self, rects_msg):
         print("received obstacle rects %s" % len(rects_msg.rects))
