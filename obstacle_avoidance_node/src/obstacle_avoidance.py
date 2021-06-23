@@ -22,8 +22,8 @@ class ObstacleAvoidance:
 
 
 def main(args):
+    rospy.init_node('obstacle_avoidance_node', anonymous=True)
     ov = ObstacleAvoidance()
-    rospy.init_node('obstacle_avoidance_node', anonymous=True) 
     try:
         rospy.spin()
     except KeyboardInterrupt:

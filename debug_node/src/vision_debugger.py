@@ -71,8 +71,8 @@ class VisionDebugger:
 
 
 def main(args):
-    od = VisionDebugger()
     rospy.init_node('debug_node', anonymous=True)
+    od = VisionDebugger()
     try:
         rospy.spin()
     except KeyboardInterrupt:
