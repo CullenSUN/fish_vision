@@ -64,13 +64,13 @@ class ObstacleDetector:
             if not is_contained:
                 msg_rect = Rect(*rect_i)
                 rects_msg.rects.append(msg_rect)
-        print("number of rects published: %s" % len(rects_msg.rects))
+        # print("number of rects published: %s" % len(rects_msg.rects))
         self.obstacles_pub.publish(rects_msg)
 
 
 def main(args):
-    od = ObstacleDetector()
     rospy.init_node('obstacle_detector_node', anonymous=True)
+    od = ObstacleDetector()
     try:
         rospy.spin()
     except KeyboardInterrupt:
