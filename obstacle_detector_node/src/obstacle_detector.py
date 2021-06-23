@@ -27,9 +27,9 @@ class ObstacleDetector:
 
     def __init__(self):
         self.bridge = CvBridge()
+        self.obstacles_pub = rospy.Publisher("/obstacle_detector_node/obstacles", RectArray, queue_size=5)
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback)
         print("ObstacleDetector subscribed to topic /raspicam_node/image/compressed")
-        self.obstacles_pub = rospy.Publisher("/obstacle_detector_node/obstacles", RectArray, queue_size=5)
 
     def callback(self, data):
         try:
