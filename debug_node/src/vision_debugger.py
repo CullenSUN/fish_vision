@@ -41,7 +41,7 @@ class VisionDebugger:
 
     def callback_image(self, data):
         if self.throttling_counter % 5 != 0:
-            increase_counter()
+            self.increase_counter()
             print("drop received image")
             return
 
@@ -64,7 +64,7 @@ class VisionDebugger:
 
         cv2.imshow(WINDOW_NAME, img)
         cv2.waitKey(24)
-        increase_counter()
+        self.increase_counter()
 
     def callback_rects(self, rects_msg):
         print("received obstacle rects %s" % len(rects_msg.rects))
