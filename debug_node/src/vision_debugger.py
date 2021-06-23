@@ -42,10 +42,9 @@ class VisionDebugger:
     def callback_image(self, data):
         if self.throttling_counter % 5 != 0:
             self.increase_counter()
-            print("drop received image")
             return
 
-        print("draw image")
+        #print("draw image")
 
         try:
             img = self.bridge.compressed_imgmsg_to_cv2(data, "bgr8")
@@ -67,7 +66,7 @@ class VisionDebugger:
         self.increase_counter()
 
     def callback_rects(self, rects_msg):
-        print("received obstacle rects %s" % len(rects_msg.rects))
+        #print("received obstacle rects %s" % len(rects_msg.rects))
         self.obstacle_rects_buffer = rects_msg.rects
 
 
