@@ -5,7 +5,22 @@ def contains(rect1, rect2):
     x2, y2, w2, h2 = rect2
     return x1 <= x2 and y1 <= y2 and x1+w1 >= x2+w2 and y1+h1 >= y2+h2 
 
-def process(img): 
+# to detect the corners
+def process_orb(img):
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Initiate ORB detector
+    orb = cv2.ORB_create(nfeatures=100)
+    # find the keypoints with ORB
+    kp = orb.detect(imgray, None)
+
+    # compute the descriptors with ORB
+    kp, des = orb.compute(imgray, kp)
+    print("keypoints", kp)
+    # draw only keypoints location,not size and orientation
+    img2 = cv2.drawKeypoints(img, kp, None, color=(0,255,0), flags=0)
+    cv2.imshow('Contours', img2)
+
+def process_canny(img): 
     imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(imgray, 100, 200)
     ret, thresh = cv2.threshold(edges, 127, 255, 0)
@@ -55,7 +70,8 @@ while(raw.isOpened()):
   if ret == True:
    
     # Display the resulting frame
-    process(frame)
+    #process_canny(frame)
+    process_orb(frame)
    
     # Press Q on keyboard to  exit
     if cv2.waitKey(25) & 0xFF == ord('q'):
