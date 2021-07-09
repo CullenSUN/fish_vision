@@ -25,28 +25,27 @@ class ObstacleDetector:
         self.bridge = CvBridge()
         self.obstacles_pub = rospy.Publisher("/obstacle_detector_node/obstacles", RectArray, queue_size=5)
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback)
-        print("ObstacleDetector subscribed to topic /raspicam_node/image/compressed")
+        rospy.loginfo("ObstacleDetector subscribed to topic /raspicam_node/image/compressed")
 
     def callback(self, data):
         try:
             cv_image = self.bridge.compressed_imgmsg_to_cv2(data)
             self.process_image(cv_image)
         except CvBridgeError as e:
-            print(e)
-        # print("image shape is", cv_image.shape)
+            rospy.logerr("error: %s", e)
 
     def process_image(self, img): 
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(imgray, 100, 200)
         ret, thresh = cv2.threshold(edges, 127, 255, 0)
         img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        rospy.loginfo("found contours: ", len(contours))
+        rospy.loginfo("found contours: %s", len(contours))
 
         contours = take_biggest_contours(contours, max_number=10)
-        print("keep biggest ten contours. remaining: ", len(contours))
+        rospy.loginfo("keep biggest ten contours. remaining: %s", len(contours))
 
         contours = agglomerative_cluster(contours, threshold_distance=10.0)
-        print("clustered contours: ", len(contours))
+        rospy.loginfo("clustered contours: %s", len(contours))
 
         # find bounding_rects
         rects_msg = RectArray()

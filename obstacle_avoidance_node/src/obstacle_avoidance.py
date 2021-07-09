@@ -12,13 +12,13 @@ from opencv_apps.msg import RectArray
 class ObstacleAvoidance:
     def __init__(self):
         self.obstacles_sub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback)
-        print("ObstacleAvoidance subscribed to topic /obstacle_detector_node/obstacles")
+        rospy.loginfo("ObstacleAvoidance subscribed to topic /obstacle_detector_node/obstacles")
 
     def callback(self, rects_msg):
         rect_array = rects_msg.rects
-        print("number of rects received: %s" % len(rect_array))
+        rospy.loginfo("number of rects received: %s", len(rect_array))
         if len(rect_array) > 0: 
-            print("first rect", rect_array[0])
+            rospy.loginfo("first rect", rect_array[0])
 
 
 def main(args):
