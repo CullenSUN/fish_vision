@@ -51,7 +51,7 @@ class ObstacleDetector:
         rects_msg = RectArray()
         for c in contours:
             rect = cv2.boundingRect(c)
-            msg_rect = Rect(*rect_i)
+            msg_rect = Rect(*rect)
             rects_msg.rects.append(msg_rect)
 
         # print("number of rects published: %s" % len(rects_msg.rects))
