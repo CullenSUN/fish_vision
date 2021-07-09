@@ -17,11 +17,7 @@ from sensor_msgs.msg import CompressedImage
 from opencv_apps.msg import RectArray
 from opencv_apps.msg import Rect
 from cv_bridge import CvBridge, CvBridgeError
-
-def rect_contains(rect1, rect2):
-    x1, y1, w1, h1 = rect1
-    x2, y2, w2, h2 = rect2
-    return x1 <= x2 and y1 <= y2 and x1+w1 >= x2+w2 and y1+h1 >= y2+h2 
+from opencv_utils import *
 
 class ObstacleDetector:
 
@@ -44,29 +40,23 @@ class ObstacleDetector:
         edges = cv2.Canny(imgray, 100, 200)
         ret, thresh = cv2.threshold(edges, 127, 255, 0)
         img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        rospy.loginfo("found contours: ", len(contours))
+
+        contours = take_biggest_contours(contours, max_number=10)
+        print("keep biggest ten contours. remaining: ", len(contours))
+
+        contours = agglomerative_cluster(contours, threshold_distance=10.0)
+        print("clustered contours: ", len(contours))
 
         # find bounding_rects
-        bounding_rects = []
+        rects_msg = RectArray()
         for c in contours:
             rect = cv2.boundingRect(c)
-            bounding_rects.append(rect)
+            msg_rect = Rect(*rect_i)
+            rects_msg.rects.append(msg_rect)
 
-        # ignore those rects that are completely contained by other bigger rects
-        rects_msg = RectArray()
-        for i, rect_i in enumerate(bounding_rects):
-            is_contained = False
-            for j, rect_j in enumerate(bounding_rects):
-                if j == i: continue
-                if rect_contains(rect_j, rect_i):
-                    is_contained = True
-                    break
-
-            if not is_contained:
-                msg_rect = Rect(*rect_i)
-                rects_msg.rects.append(msg_rect)
         # print("number of rects published: %s" % len(rects_msg.rects))
         self.obstacles_pub.publish(rects_msg)
-
 
 def main(args):
     rospy.init_node('obstacle_detector_node', anonymous=True)
@@ -76,6 +66,5 @@ def main(args):
     except KeyboardInterrupt:
         print("Shutting down")
     
-
 if __name__ == '__main__':
     main(sys.argv)
