@@ -28,11 +28,10 @@ class VisionDebugger:
         self.obstacle_rects_buffer = None
         self.throttling_counter = 0
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback_image)
-        print("VisionDebugger subscribed to topic /raspicam_node/image/compressed")
+        rospy.loginfo("VisionDebugger subscribed to topic /raspicam_node/image/compressed")
 
         self.obstacles_pub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback_rects)
-        print("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
-
+        rospy.loginfo("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
 
     def increase_counter(self):
         self.throttling_counter += 1
@@ -44,12 +43,10 @@ class VisionDebugger:
             self.increase_counter()
             return
 
-        #print("draw image")
-
         try:
             img = self.bridge.compressed_imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
-            print(e)
+            rospy.logerr("error: %s", e)
 
         # draw obstacle rects in the image
         if self.obstacle_rects_buffer is not None: 
