@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 """
-This is a little tool to capture videos automatically with the raspberry pi.
-## To make this script auto run on raspberry pi reboot, need to do the following: 
+This is a little tool to capture videos automatically with the raspberry pi. 
+Captured videos will be saved at path `/home/pi/Desktop/videos`. Maximum 20 videos, each of which is 30 seconds.
 
+## To make this script auto run on raspberry pi reboot, need to do the following: 
 - Type `crontab -e` in terminal.
 - Insert `@reboot python3 /home/pi/projects/fish_vision/tools/video_capture.py` at the bottom. 
 
@@ -13,7 +14,7 @@ import os
 import datetime as dt
 from pathlib import Path
 
-MAX_NUMBER_OF_FILES = 5
+MAX_NUMBER_OF_FILES = 20
 
 def create_dir_if_not_exist(dir_path):
     Path(dir_path).mkdir(parents=True, exist_ok=True)
