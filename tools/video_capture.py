@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+This is a little tool to capture videos automatically with the raspberry pi.
+## To make this script auto run on raspberry pi reboot, need to do the following: 
+
+- Type `crontab -e` in terminal.
+- Insert `@reboot python3 /home/pi/projects/fish_vision/tools/video_capture.py` at the bottom. 
+
+"""
 import picamera
 import os
 import datetime as dt
