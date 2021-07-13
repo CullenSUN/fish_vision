@@ -5,12 +5,14 @@ import os
 import datetime as dt
 from pathlib import Path
 
+MAX_NUMBER_OF_FILES = 5
+
 def create_dir_if_not_exist(dir_path):
     Path(dir_path).mkdir(parents=True, exist_ok=True)
 
-def delete_old_files(dir_path, max_num_files=5):
+def delete_old_files(dir_path):
     paths = sorted(Path(dir_path).iterdir(), key=os.path.getmtime, reverse=True)
-    for file in paths[max_num_files-1:]:
+    for file in paths[MAX_NUMBER_OF_FILES-1:]:
         print(f'removing file at {file}')
         os.remove(file)
 
@@ -29,4 +31,4 @@ def capture_videos(dir_path):
 if __name__ == '__main__':
     file_directory = '/home/pi/Desktop/videos'
     create_dir_if_not_exist(file_directory)
-    capture_videos(file_directory, max_num_files=5)
+    capture_videos(file_directory)
