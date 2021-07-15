@@ -17,7 +17,7 @@ from pathlib import Path
 import RPi.GPIO as GPIO
 
 MAX_NUMBER_OF_FILES = 100
-LED_PIN = 12
+LED_PIN = 40
 
 def create_dir_if_not_exist(dir_path):
     Path(dir_path).mkdir(parents=True, exist_ok=True)
