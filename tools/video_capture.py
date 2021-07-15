@@ -9,6 +9,7 @@ Captured videos will be saved at path `/home/pi/Desktop/videos`. Maximum 20 vide
 - Insert `@reboot python3 /home/pi/projects/fish_vision/tools/video_capture.py` at the bottom. 
 
 """
+
 import picamera
 import os
 import time
@@ -34,18 +35,14 @@ def delete_old_files(dir_path):
         os.remove(file)
 
 def flash_led():
-    print("LED turning on.")
+    print("flash led")
     GPIO.output(LED_PIN, GPIO.HIGH)
     time.sleep(0.5)
-    print("LED turning off.")
     GPIO.output(LED_PIN, GPIO.LOW) 
     time.sleep(0.5)
-
     GPIO.output(LED_PIN, GPIO.HIGH)
     time.sleep(0.5)
-    print("LED turning off.")
     GPIO.output(LED_PIN, GPIO.LOW) 
-
 
 def capture_videos(dir_path):
     create_dir_if_not_exist(dir_path)

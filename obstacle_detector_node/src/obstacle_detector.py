@@ -41,10 +41,10 @@ class ObstacleDetector:
         img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         rospy.loginfo("found contours: %s", len(contours))
 
-        contours = take_biggest_contours(contours, max_number=10)
+        contours = take_biggest_contours(contours, max_number=20)
         rospy.loginfo("keep biggest ten contours. remaining: %s", len(contours))
 
-        contours = agglomerative_cluster(contours, threshold_distance=10.0)
+        contours = agglomerative_cluster(contours, threshold_distance=30.0)
         rospy.loginfo("clustered contours: %s", len(contours))
 
         # find bounding_rects

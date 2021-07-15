@@ -4,6 +4,12 @@ import cv2
 import numpy
 import os
 
+def resize_image(img, factor):
+    width = int(img.shape[1] * factor)
+    height = int(img.shape[0] * factor)
+    dim = (width, height)
+    return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
 # calculate distance between two contours
 def calculate_contour_distance(contour1, contour2): 
     center1, radius1 = cv2.minEnclosingCircle(contour1)
@@ -11,11 +17,11 @@ def calculate_contour_distance(contour1, contour2):
     return cv2.norm(center1, center2) - (radius1 + radius2)
 
 # only keep the biggest ten to make computation faster 
-def take_biggest_contours(contours, max_number=10):
+def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: cv2.minEnclosingCircle(x)[1], reverse=True)
     return sorted_contours[:max_number]
 
-def agglomerative_cluster(contours, threshold_distance=10.0):
+def agglomerative_cluster(contours, threshold_distance=20.0):
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
