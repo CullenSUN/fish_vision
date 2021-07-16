@@ -16,13 +16,27 @@ def contains(rect1, rect2):
 
 # calculate distance between two contours
 def calculate_contour_distance(contour1, contour2): 
-    center1, radius1 = cv2.minEnclosingCircle(contour1)
-    center2, radius2 = cv2.minEnclosingCircle(contour2)
-    return cv2.norm(center1, center2) - (radius1 + radius2)
+    rect1 = cv2.minAreaRect(contour1)
+    box1 = numpy.int0(cv2.boxPoints(rect1))
+
+    rect2 = cv2.minAreaRect(contour2)
+    box2 = numpy.int0(cv2.boxPoints(rect2))
+
+    distances = []
+    for point1 in box1:
+        for point2 in box2:
+            distance = cv2.norm(point1, point2)
+            distances.append(distance)
+
+    return min(distances)
+
+def calculate_contour_area(contour):
+  _, (w, h), _ = cv2.minAreaRect(contour)
+  return w * h
 
 # only keep the biggest ten to make computation faster 
 def take_biggest_contours(contours, max_number=20):
-    sorted_contours = sorted(contours, key=lambda x: cv2.minEnclosingCircle(x)[1], reverse=True)
+    sorted_contours = sorted(contours, key=lambda x: calculate_contour_area(x), reverse=True)
     return sorted_contours[:max_number]
 
 def agglomerative_cluster(contours, threshold_distance=20.0):

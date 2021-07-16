@@ -6,8 +6,8 @@ if __name__ == '__main__':
     cv2.namedWindow('Contours', cv2.WINDOW_NORMAL)
 
     script_path = os.path.dirname(os.path.realpath(__file__))
-    #img_path = os.path.join(script_path, 'videos/pool_test_1.MOV')
     img_path = os.path.join(script_path, 'videos/pi_capture_2.h264')
+    #img_path = os.path.join(script_path, 'videos/turtle.mov')
 
     raw = cv2.VideoCapture(img_path)
 
