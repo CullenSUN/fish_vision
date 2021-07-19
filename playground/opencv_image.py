@@ -3,6 +3,7 @@
 import cv2
 import numpy
 import os
+import matplotlib.pyplot as plt
 
 def resize_image(img, factor):
     width = int(img.shape[1] * factor)
@@ -35,7 +36,7 @@ def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: calculate_contour_area(x), reverse=True)
     return sorted_contours[:max_number]
 
-def agglomerative_cluster(contours, threshold_distance=50.0):
+def agglomerative_cluster(contours, threshold_distance=60.0):
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -61,12 +62,29 @@ def agglomerative_cluster(contours, threshold_distance=50.0):
 
     return current_contours
 
-def process_canny(img): 
+def detect_objects(img): 
     imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(imgray, 100, 200)
     ret, thresh = cv2.threshold(edges, 127, 255, 0)
     img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
+    contours = take_biggest_contours(contours)
+    contours = agglomerative_cluster(contours)
+
+    objects = []
+    for c in contours:
+        rect = cv2.boundingRect(c)
+        x, y, w, h = rect
+        cropped_img = imgray[y:y+h, x:x+w].copy()
+        object_tuple = (rect, cropped_img)
+        objects.append(object_tuple)
+    return objects
+
+def process_canny(img): 
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(imgray, 100, 200)
+    ret, thresh = cv2.threshold(edges, 127, 255, 0)
+    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
     print("found contours: ", len(contours))
 
     contours = take_biggest_contours(contours)
@@ -79,34 +97,81 @@ def process_canny(img):
         x, y, w, h = cv2.boundingRect(c)
         cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-    #cv2.drawContours(img, contours, -1, (0, 0, 255), 3)
     cv2.imshow('Contours', img)
 
-# to detect the corners
-def process_orb(img):
-    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Initiate ORB detector
+def match_by_template(img, template, threshold_score=0.9):
+    i_height, i_width = template.shape
+    t_height, t_width = img.shape
+
+    # make sure img is bigger than the template
+    if i_height <= t_height or i_width <= t_width:
+        return False
+
+    result = cv2.matchTemplate(img, template, cv2.TM_CCORR_NORMED)
+    _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
+    return _maxVal > threshold_score
+
+def match_images(img1, img2):
     orb = cv2.ORB_create()
-    # find the keypoints with ORB
-    kp = orb.detect(imgray, None)
+    kp1, des1 = orb.detectAndCompute(img1, None)
+    kp2, des2 = orb.detectAndCompute(img2, None)
+    print("kp1", len(kp1))
+    print("kp2", len(kp2))
 
-    # compute the descriptors with ORB
-    kp, des = orb.compute(imgray, kp)
-    print("keypoints", kp)
-    # draw only keypoints location,not size and orientation
-    img2 = cv2.drawKeypoints(img, kp, None, color=(0, 255, 0), flags=0)
-    cv2.imshow('Contours_orb', img2)
-
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    matches = bf.match(des1, des2)
+    # Sort them in the order of their distance.
+   
+    print("matches", len(matches))
+    if len(matches) > 25:
+        matches = sorted(matches, key = lambda x: x.distance)
+        # Draw first 10 matches.
+        img3 = cv2.drawMatches(img1, kp1, 
+                               img2, kp2, 
+                               matches[:10], None, 
+                               flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        plt.imshow(img3),plt.show()
 
 if __name__ == '__main__':
-    cv2.namedWindow('Contours_canny', cv2.WINDOW_NORMAL)
     script_path = os.path.dirname(os.path.realpath(__file__))
-    img_path = os.path.join(script_path, 'images/wall_3.jpg')
-    print(img_path)
-    img = cv2.imread(img_path)
-    process_canny(img)
-    #process_orb(img)
+
+    img_path1 = os.path.join(script_path, 'images/wall_1.jpg')
+    img1 = cv2.imread(img_path1)
+
+    # process_canny(img1)
+    # if cv2.waitKey(0):
+    #     cv2.destroyAllWindows()
+    # exit()
+
+    img_path3 = os.path.join(script_path, 'images/wall_3.jpg')
+    img3 = cv2.imread(img_path3)
+    objects1 = detect_objects(img1)
+    print("detected objects1, ", len(objects1))
+
+    objects3 = detect_objects(img3)
+    print("detected objects3, ", len(objects3))
+
+    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
+    obstacle_rects = set()
+    for (rect1, obj1) in objects1:
+        for (rect3, obj3) in objects3:
+            for scale in scales:
+                width = int(obj3.shape[1] * scale)
+                height = int(obj3.shape[0] * scale)
+                dim = (width, height)
+                scaled_obj3 = cv2.resize(obj3, dim, interpolation = cv2.INTER_AREA)
+                matched = match_by_template(obj1, scaled_obj3)
+                if matched:
+                    print("matched at scale", scale, rect3)
+                    obstacle_rects.add(rect3)
+    
+    for rect in obstacle_rects: 
+        x, y, w, h = rect
+        cv2.rectangle(img3, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    
+    print("confirmed obstacles, ", len(obstacle_rects))
+
+    cv2.imshow("obstacles in Image", img3)
 
     if cv2.waitKey(0):
         cv2.destroyAllWindows()
-
