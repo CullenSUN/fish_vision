@@ -36,7 +36,7 @@ def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: calculate_contour_area(x), reverse=True)
     return sorted_contours[:max_number]
 
-def agglomerative_cluster(contours, threshold_distance=60.0):
+def agglomerative_cluster(contours, threshold_distance=50.0):
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -80,24 +80,21 @@ def detect_objects(img):
         objects.append(object_tuple)
     return objects
 
-def process_canny(img): 
-    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(imgray, 100, 200)
-    ret, thresh = cv2.threshold(edges, 127, 255, 0)
-    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
-    print("found contours: ", len(contours))
-
-    contours = take_biggest_contours(contours)
-    print("keep biggest ten contours. remaining: ", len(contours))
-
-    contours = agglomerative_cluster(contours)
-    print("clustered contours: ", len(contours))
-
-    for c in contours:
-        x, y, w, h = cv2.boundingRect(c)
-        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
-    cv2.imshow('Contours', img)
+"""
+Scale down current objects to match with previous objects by template. If match, it's obstacle.
+"""
+def detect_obstacles(previous_objects, current_objects):
+    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
+    obstacle_rects = set()
+    for (rect2, obj2) in current_objects:
+        for (rect1, obj1) in previous_objects:
+            for scale in scales:
+                width = int(obj2.shape[1] * scale)
+                height = int(obj2.shape[0] * scale)
+                scaled_obj2 = cv2.resize(obj2, (width, height), interpolation=cv2.INTER_AREA)
+                if match_by_template(obj1, scaled_obj2):
+                    obstacle_rects.add(rect2)
+    return obstacle_rects
 
 def match_by_template(img, template, threshold_score=0.9):
     i_height, i_width = template.shape
@@ -111,7 +108,7 @@ def match_by_template(img, template, threshold_score=0.9):
     _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
     return _maxVal > threshold_score
 
-def match_images(img1, img2):
+def match_by_features(img1, img2):
     orb = cv2.ORB_create()
     kp1, des1 = orb.detectAndCompute(img1, None)
     kp2, des2 = orb.detectAndCompute(img2, None)
@@ -132,46 +129,40 @@ def match_images(img1, img2):
                                flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         plt.imshow(img3),plt.show()
 
+def process_by_contours(img): 
+    objects = detect_objects(img)
+    print("detected objects: ", len(objects))
+
+    for (rect, cropped_img) in objects:
+        x, y, w, h = rect
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+    cv2.imshow('process_by_contours', img)
+
+    if cv2.waitKey(0):
+        cv2.destroyAllWindows()
+
 if __name__ == '__main__':
     script_path = os.path.dirname(os.path.realpath(__file__))
 
     img_path1 = os.path.join(script_path, 'images/wall_1.jpg')
     img1 = cv2.imread(img_path1)
-
-    # process_canny(img1)
-    # if cv2.waitKey(0):
-    #     cv2.destroyAllWindows()
-    # exit()
-
-    img_path3 = os.path.join(script_path, 'images/wall_3.jpg')
-    img3 = cv2.imread(img_path3)
     objects1 = detect_objects(img1)
     print("detected objects1, ", len(objects1))
 
+    img_path3 = os.path.join(script_path, 'images/wall_3.jpg')
+    img3 = cv2.imread(img_path3)
     objects3 = detect_objects(img3)
     print("detected objects3, ", len(objects3))
 
-    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
-    obstacle_rects = set()
-    for (rect1, obj1) in objects1:
-        for (rect3, obj3) in objects3:
-            for scale in scales:
-                width = int(obj3.shape[1] * scale)
-                height = int(obj3.shape[0] * scale)
-                dim = (width, height)
-                scaled_obj3 = cv2.resize(obj3, dim, interpolation = cv2.INTER_AREA)
-                matched = match_by_template(obj1, scaled_obj3)
-                if matched:
-                    print("matched at scale", scale, rect3)
-                    obstacle_rects.add(rect3)
-    
+    obstacle_rects = detect_obstacles(previous_objects=objects1, current_objects=objects3)
+    print("confirmed obstacles, ", len(obstacle_rects))
+
     for rect in obstacle_rects: 
         x, y, w, h = rect
         cv2.rectangle(img3, (x, y), (x+w, y+h), (0, 255, 0), 2)
     
-    print("confirmed obstacles, ", len(obstacle_rects))
-
-    cv2.imshow("obstacles in Image", img3)
+    cv2.imshow("Obstacles in Image", img3)
 
     if cv2.waitKey(0):
         cv2.destroyAllWindows()
