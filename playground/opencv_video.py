@@ -50,9 +50,10 @@ if __name__ == '__main__':
         print('resized dimensions: ', img.shape)
 
         detected_obstacles = processor.callback_image(img)
-        for rect in detected_obstacles or []: 
+        for (rect, scale) in detected_obstacles or []: 
             x, y, w, h = rect
-            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            red_color = min(255, 128*scale)
+            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, red_color), 2)
         cv2.imshow('Obstacles', img)
 
         # Press Q on keyboard to exit

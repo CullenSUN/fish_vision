@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import cv2
-import numpy
+import numpy as np
 import os
 import matplotlib.pyplot as plt
 
@@ -14,10 +14,10 @@ def resize_image(img, factor):
 # calculate distance between two contours
 def calculate_contour_distance(contour1, contour2): 
     rect1 = cv2.minAreaRect(contour1)
-    box1 = numpy.int0(cv2.boxPoints(rect1))
+    box1 = np.int0(cv2.boxPoints(rect1))
 
     rect2 = cv2.minAreaRect(contour2)
-    box2 = numpy.int0(cv2.boxPoints(rect2))
+    box2 = np.int0(cv2.boxPoints(rect2))
 
     distances = []
     for point1 in box1:
@@ -55,7 +55,7 @@ def agglomerative_cluster(contours, threshold_distance=50.0):
         if min_distance < threshold_distance:
             # merge closest two contours
             index1, index2 = min_coordinate
-            current_contours[index1] = numpy.concatenate((current_contours[index1], current_contours[index2]), axis=0)
+            current_contours[index1] = np.concatenate((current_contours[index1], current_contours[index2]), axis=0)
             del current_contours[index2]
         else: 
             break
@@ -75,7 +75,7 @@ def detect_objects(img):
     for c in contours:
         rect = cv2.boundingRect(c)
         x, y, w, h = rect
-        cropped_img = imgray[y:y+h, x:x+w].copy()
+        cropped_img = img[y:y+h, x:x+w].copy()
         object_tuple = (rect, cropped_img)
         objects.append(object_tuple)
     return objects
@@ -84,7 +84,8 @@ def detect_objects(img):
 Scale down current objects to match with previous objects by template. If match, it's obstacle.
 """
 def detect_obstacles(previous_objects, current_objects):
-    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
+    # downscale current objects to cater occlusion 
+    scales = [0.85, 0.8, 0.75, 0.7, 0.65]
     obstacle_rects = set()
     for (rect2, obj2) in current_objects:
         for (rect1, obj1) in previous_objects:
@@ -93,12 +94,15 @@ def detect_obstacles(previous_objects, current_objects):
                 height = int(obj2.shape[0] * scale)
                 scaled_obj2 = cv2.resize(obj2, (width, height), interpolation=cv2.INTER_AREA)
                 if match_by_template(obj1, scaled_obj2):
-                    obstacle_rects.add(rect2)
+                    # inverse scale to make sense of risk level
+                    enlarging_scale = 1/scale
+                    obstacle_rects.add((rect2, enlarging_scale)) 
+                    break
     return obstacle_rects
 
-def match_by_template(img, template, threshold_score=0.9):
-    i_height, i_width = template.shape
-    t_height, t_width = img.shape
+def match_by_template(img, template, threshold_score=0.90):
+    i_height, i_width, i_color = img.shape
+    t_height, t_width, t_color = template.shape
 
     # make sure img is bigger than the template
     if i_height <= t_height or i_width <= t_width:
@@ -106,6 +110,8 @@ def match_by_template(img, template, threshold_score=0.9):
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCORR_NORMED)
     _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
+    if _maxVal > threshold_score:
+        print("got it")
     return _maxVal > threshold_score
 
 def match_by_features(img1, img2):
@@ -158,9 +164,10 @@ if __name__ == '__main__':
     obstacle_rects = detect_obstacles(previous_objects=objects1, current_objects=objects3)
     print("confirmed obstacles, ", len(obstacle_rects))
 
-    for rect in obstacle_rects: 
+    for (rect, scale) in obstacle_rects: 
         x, y, w, h = rect
-        cv2.rectangle(img3, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        red_color = min(255, 128*scale)
+        cv2.rectangle(img3, (x, y), (x+w, y+h), (0, 0, red_color), 2)
     
     cv2.imshow("Obstacles in Image", img3)
 
