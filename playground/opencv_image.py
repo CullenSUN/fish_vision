@@ -27,16 +27,12 @@ def calculate_contour_distance(contour1, contour2):
 
     return min(distances)
 
-def calculate_contour_area(contour):
-  _, (w, h), _ = cv2.minAreaRect(contour)
-  return w * h
-
-# only keep the biggest ten to make computation faster 
-def take_biggest_contours(contours, max_number=20):
-    sorted_contours = sorted(contours, key=lambda x: calculate_contour_area(x), reverse=True)
+# only keep the biggest tetake_biggest_contoursn to make computation faster 
+def take_biggest_contours(contours, max_number=10):
+    sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     return sorted_contours[:max_number]
 
-def agglomerative_cluster(contours, threshold_distance=50.0):
+def agglomerative_cluster(contours, threshold_distance=40.0):
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -63,8 +59,11 @@ def agglomerative_cluster(contours, threshold_distance=50.0):
     return current_contours
 
 def detect_objects(img): 
-    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(imgray, 100, 200)
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #blurred_img = low_pass_filter(gray_img)
+    equalized_img = cv2.equalizeHist(gray_img)
+    blurred_img = cv2.GaussianBlur(equalized_img,(9,9),0)
+    edges = cv2.Canny(blurred_img, 100, 200)
     ret, thresh = cv2.threshold(edges, 127, 255, 0)
     img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
@@ -75,6 +74,11 @@ def detect_objects(img):
     for c in contours:
         rect = cv2.boundingRect(c)
         x, y, w, h = rect
+        
+        # ignore small contours
+        if w < 10 or h < 10:
+            continue
+
         cropped_img = img[y:y+h, x:x+w].copy()
         object_tuple = (rect, cropped_img)
         objects.append(object_tuple)
@@ -110,8 +114,6 @@ def match_by_template(img, template, threshold_score=0.90):
 
     result = cv2.matchTemplate(img, template, cv2.TM_CCORR_NORMED)
     _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
-    if _maxVal > threshold_score:
-        print("got it")
     return _maxVal > threshold_score
 
 def match_by_features(img1, img2):
@@ -147,6 +149,22 @@ def process_by_contours(img):
 
     if cv2.waitKey(0):
         cv2.destroyAllWindows()
+
+def low_pass_filter(img, frequence_threshold = 50):
+    dft = cv2.dft(np.float32(img), flags = cv2.DFT_COMPLEX_OUTPUT)
+    dft_shift = np.fft.fftshift(dft)
+    rows, cols = img.shape
+    crow, ccol = rows/2, cols/2
+    # create a mask first, center square is 1, remaining all zeros
+    mask = np.zeros((rows,cols,2), np.uint8)
+    mask[crow-frequence_threshold:crow+frequence_threshold, ccol-frequence_threshold:ccol+frequence_threshold] = 1
+
+    # apply mask and inverse DFT
+    fshift = dft_shift * mask
+    f_ishift = np.fft.ifftshift(fshift)
+    img_back = cv2.idft(f_ishift, flags = cv2.DFT_SCALE | cv2.DFT_REAL_OUTPUT)
+    img_back = np.uint8(img_back) 
+    return img_back
 
 if __name__ == '__main__':
     script_path = os.path.dirname(os.path.realpath(__file__))

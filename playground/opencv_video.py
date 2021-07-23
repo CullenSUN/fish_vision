@@ -35,7 +35,8 @@ if __name__ == '__main__':
     cv2.namedWindow('Obstacles', cv2.WINDOW_NORMAL)
 
     script_path = os.path.dirname(os.path.realpath(__file__))
-    img_path = os.path.join(script_path, 'videos/home_capture_1.h264')
+    #img_path = os.path.join(script_path, 'videos/home_capture_1.h264')
+    img_path = os.path.join(script_path, 'videos/pool_capture_4.h264')
 
     processor = VideoProcessor()
     raw = cv2.VideoCapture(img_path)
@@ -47,7 +48,7 @@ if __name__ == '__main__':
             break
         
         img = resize_image(img, 0.5)
-        print('resized dimensions: ', img.shape)
+        # print('resized dimensions: ', img.shape)
 
         detected_obstacles = processor.callback_image(img)
         for (rect, scale) in detected_obstacles or []: 
