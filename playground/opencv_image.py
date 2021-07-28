@@ -60,11 +60,13 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
 
 def detect_objects(img): 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #blurred_img = low_pass_filter(gray_img)
     equalized_img = cv2.equalizeHist(gray_img)
     blurred_img = cv2.GaussianBlur(equalized_img,(9,9),0)
     edges = cv2.Canny(blurred_img, 100, 200)
     ret, thresh = cv2.threshold(edges, 127, 255, 0)
+    # saliency = cv2.saliency.StaticSaliencyFineGrained_create()
+    # success, saliencyMap = saliency.computeSaliency(blurred_img)
+    # ret, thresh = cv2.threshold(saliencyMap.astype("uint8"), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
 
     contours = take_biggest_contours(contours)
