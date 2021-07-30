@@ -13,19 +13,15 @@ def resize_image(img, factor):
 
 # calculate distance between two contours
 def calculate_contour_distance(contour1, contour2): 
-    rect1 = cv2.minAreaRect(contour1)
-    box1 = np.int0(cv2.boxPoints(rect1))
+    x1, y1, w1, h1 = cv2.boundingRect(contour1)
+    c_x1 = x1 + w1/2
+    c_y1 = y1 + h1/2
 
-    rect2 = cv2.minAreaRect(contour2)
-    box2 = np.int0(cv2.boxPoints(rect2))
+    x2, y2, w2, h2 = cv2.boundingRect(contour2)
+    c_x2 = x2 + w2/2
+    c_y2 = y2 + h2/2
 
-    distances = []
-    for point1 in box1:
-        for point2 in box2:
-            distance = cv2.norm(point1, point2)
-            distances.append(distance)
-
-    return min(distances)
+    return max(abs(c_x1 - c_x2) - (w1 + w2)/2, abs(c_y1 - c_y2) - (h1 + h2)/2)
 
 # only keep the biggest tetake_biggest_contoursn to make computation faster 
 def take_biggest_contours(contours, max_number=10):
