@@ -44,20 +44,20 @@ class ObstacleDetector:
             rospy.logerr("error: %s", e)
 
     def _process_image(self, img): 
-        detected_obstacles = self.detect_obstacle(img)
+        detected_obstacles = self._detect_obstacles(img)
         if detected_obstacles is None:
             return 
 
         # find bounding_rects
         rects_msg = RectArray()
-        for (rect, scale) in _detect_obstacle or []: 
+        for (rect, scale) in detected_obstacles or []: 
             msg_rect = Rect(*rect)
             rects_msg.rects.append(msg_rect)
 
         rospy.loginfo("number of rects published: %s" % len(rects_msg.rects))
         self.obstacles_pub.publish(rects_msg)
 
-    def _detect_obstacle(self, img): 
+    def _detect_obstacles(self, img): 
         if self.throttling_counter % SAMPLING_PERIOD != 0:
             self._increase_counter()
             return None
