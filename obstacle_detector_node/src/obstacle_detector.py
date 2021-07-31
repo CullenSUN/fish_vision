@@ -68,9 +68,9 @@ class ObstacleDetector:
             return None
         else:
             current_objects = opencv_utils.detect_objects(img)
-            rospy.loginfo("current_objects", len(current_objects))
+            rospy.loginfo("current_objects: %s" % len(current_objects))
             obstacle_rects = opencv_utils.detect_obstacles(self.previous_objects, current_objects)
-            rospy.loginfo("confirmed obstacles", len(obstacle_rects))
+            rospy.loginfo("confirmed obstacles: %s" % len(obstacle_rects))
             self.previous_objects = current_objects
             self._increase_counter()
             return obstacle_rects
