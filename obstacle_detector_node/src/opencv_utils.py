@@ -44,7 +44,7 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
         if min_distance < threshold_distance:
             # merge closest two contours
             index1, index2 = min_coordinate
-            current_contours[index1] = np.concatenate((current_contours[index1], current_contours[index2]), axis=0)
+            current_contours[index1] = numpy.concatenate((current_contours[index1], current_contours[index2]), axis=0)
             del current_contours[index2]
         else: 
             break
