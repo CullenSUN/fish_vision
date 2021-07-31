@@ -62,6 +62,9 @@ class ObstacleDetector:
             self._increase_counter()
             return None
 
+        # resize from 1280x720 to 640x360
+        img = opencv_utils.resize_image(img, 0.5)
+
         if self.previous_objects is None:
             self.previous_objects = opencv_utils.detect_objects(img)
             self._increase_counter()
