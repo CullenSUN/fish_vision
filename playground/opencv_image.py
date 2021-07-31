@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import random as rng
 
 def resize_image(img, factor):
     width = int(img.shape[1] * factor)
@@ -24,7 +25,7 @@ def calculate_contour_distance(contour1, contour2):
     return max(abs(c_x1 - c_x2) - (w1 + w2)/2, abs(c_y1 - c_y2) - (h1 + h2)/2)
 
 # only keep the biggest tetake_biggest_contoursn to make computation faster 
-def take_biggest_contours(contours, max_number=10):
+def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     return sorted_contours[:max_number]
 
@@ -54,11 +55,31 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
 
     return current_contours
 
+def draw_contours(img):
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    equalized_img = cv2.equalizeHist(gray_img)
+    blurred_img = cv2.GaussianBlur(equalized_img,(9,9),0)
+    edges = cv2.Canny(blurred_img, 90, 180)
+    ret, thresh = cv2.threshold(edges, 127, 255, 0)
+    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+
+    drawing = np.zeros((edges.shape[0], edges.shape[1], 3), dtype=np.uint8)
+    for i in range(len(contours)):
+        #color = (255, 255, 255)
+        color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
+        cv2.drawContours(drawing, contours, i, color, 2, cv2.LINE_8, hierarchy, 0)
+
+    print("found %s contours " % len(contours))
+    # Show in a window
+    cv2.imshow('Contours', drawing)
+    if cv2.waitKey(0):
+        cv2.destroyAllWindows()
+
 def detect_objects(img): 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     equalized_img = cv2.equalizeHist(gray_img)
     blurred_img = cv2.GaussianBlur(equalized_img,(9,9),0)
-    edges = cv2.Canny(blurred_img, 100, 200)
+    edges = cv2.Canny(blurred_img, 90, 180)
     ret, thresh = cv2.threshold(edges, 127, 255, 0)
     # saliency = cv2.saliency.StaticSaliencyFineGrained_create()
     # success, saliencyMap = saliency.computeSaliency(blurred_img)
