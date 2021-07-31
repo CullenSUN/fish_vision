@@ -55,10 +55,43 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
 
     return current_contours
 
-def draw_contours(img):
+def detect_objects(img): 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     equalized_img = cv2.equalizeHist(gray_img)
-    blurred_img = cv2.GaussianBlur(equalized_img,(9,9),0)
+    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
+    edges = cv2.Canny(blurred_img, 90, 180)
+    ret, thresh = cv2.threshold(edges, 127, 255, 0)
+    # saliency = cv2.saliency.StaticSaliencyFineGrained_create()
+    # success, saliencyMap = saliency.computeSaliency(blurred_img)
+    # ret, thresh = cv2.threshold(saliencyMap.astype("uint8"), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+    print("contours after findContours: %s" % len(contours))
+
+    contours = take_biggest_contours(contours)
+    print("contours after take_biggest_contours: %s" % len(contours))
+
+    contours = agglomerative_cluster(contours)
+    print("contours after agglomerative_cluster: %s" % len(contours))
+
+    objects = []
+    for c in contours:
+        rect = cv2.boundingRect(c)
+        x, y, w, h = rect
+        
+        # ignore small contours
+        if w < 20 and h < 20:
+            print("dropping rect due to small size", rect)
+            continue
+
+        cropped_img = img[y:y+h, x:x+w].copy()
+        object_tuple = (rect, cropped_img)
+        objects.append(object_tuple)
+    return objects
+
+def show_contours(img):
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    equalized_img = cv2.equalizeHist(gray_img)
+    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
     edges = cv2.Canny(blurred_img, 90, 180)
     ret, thresh = cv2.threshold(edges, 127, 255, 0)
     img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
@@ -75,33 +108,18 @@ def draw_contours(img):
     if cv2.waitKey(0):
         cv2.destroyAllWindows()
 
-def detect_objects(img): 
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    equalized_img = cv2.equalizeHist(gray_img)
-    blurred_img = cv2.GaussianBlur(equalized_img,(9,9),0)
-    edges = cv2.Canny(blurred_img, 90, 180)
-    ret, thresh = cv2.threshold(edges, 127, 255, 0)
-    # saliency = cv2.saliency.StaticSaliencyFineGrained_create()
-    # success, saliencyMap = saliency.computeSaliency(blurred_img)
-    # ret, thresh = cv2.threshold(saliencyMap.astype("uint8"), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+def show_contours_with_original_image(img): 
+    objects = detect_objects(img)
+    print("detected objects: ", len(objects))
 
-    contours = take_biggest_contours(contours)
-    contours = agglomerative_cluster(contours)
-
-    objects = []
-    for c in contours:
-        rect = cv2.boundingRect(c)
+    for (rect, cropped_img) in objects:
         x, y, w, h = rect
-        
-        # ignore small contours
-        if w < 10 or h < 10:
-            continue
+        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-        cropped_img = img[y:y+h, x:x+w].copy()
-        object_tuple = (rect, cropped_img)
-        objects.append(object_tuple)
-    return objects
+    cv2.imshow('process_by_contours', img)
+
+    if cv2.waitKey(0):
+        cv2.destroyAllWindows()
 
 """
 Scale down current objects to match with previous objects by template. If match, it's obstacle.
@@ -156,19 +174,6 @@ def match_by_features(img1, img2):
                                flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         plt.imshow(img3),plt.show()
 
-def process_by_contours(img): 
-    objects = detect_objects(img)
-    print("detected objects: ", len(objects))
-
-    for (rect, cropped_img) in objects:
-        x, y, w, h = rect
-        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
-    cv2.imshow('process_by_contours', img)
-
-    if cv2.waitKey(0):
-        cv2.destroyAllWindows()
-
 def low_pass_filter(img, frequence_threshold = 50):
     dft = cv2.dft(np.float32(img), flags = cv2.DFT_COMPLEX_OUTPUT)
     dft_shift = np.fft.fftshift(dft)
@@ -193,9 +198,9 @@ if __name__ == '__main__':
     objects1 = detect_objects(img1)
     print("detected objects1, ", len(objects1))
 
-    img_path3 = os.path.join(script_path, 'images/wall_3.jpg')
-    img3 = cv2.imread(img_path3)
-    objects3 = detect_objects(img3)
+    img_path2 = os.path.join(script_path, 'images/wall_3.jpg')
+    img2 = cv2.imread(img_path2)
+    objects3 = detect_objects(img2)
     print("detected objects3, ", len(objects3))
 
     obstacle_rects = detect_obstacles(previous_objects=objects1, current_objects=objects3)
@@ -204,9 +209,9 @@ if __name__ == '__main__':
     for (rect, scale) in obstacle_rects: 
         x, y, w, h = rect
         red_color = min(255, 128*scale)
-        cv2.rectangle(img3, (x, y), (x+w, y+h), (0, 0, red_color), 2)
+        cv2.rectangle(img2, (x, y), (x+w, y+h), (0, 0, red_color), 2)
     
-    cv2.imshow("Obstacles in Image", img3)
+    cv2.imshow("Obstacles in Image", img2)
 
     if cv2.waitKey(0):
         cv2.destroyAllWindows()

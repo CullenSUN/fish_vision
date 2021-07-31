@@ -33,14 +33,14 @@ class VisionDebugger:
         self.obstacles_pub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback_rects)
         rospy.loginfo("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
 
-    def increase_counter(self):
+    def _increase_counter(self):
         self.throttling_counter += 1
         if self.throttling_counter >= 5:
             self.throttling_counter = 0
 
     def callback_image(self, data):
         if self.throttling_counter % 5 != 0:
-            self.increase_counter()
+            self._increase_counter()
             return
 
         try:

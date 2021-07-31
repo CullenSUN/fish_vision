@@ -9,37 +9,23 @@ def resize_image(img, factor):
     dim = (width, height)
     return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-def contains(rect1, rect2):
-    x1, y1, w1, h1 = rect1
-    x2, y2, w2, h2 = rect2
-    return x1 <= x2 and y1 <= y2 and x1+w1 >= x2+w2 and y1+h1 >= y2+h2 
-
 # calculate distance between two contours
 def calculate_contour_distance(contour1, contour2): 
-    rect1 = cv2.minAreaRect(contour1)
-    box1 = numpy.int0(cv2.boxPoints(rect1))
+    x1, y1, w1, h1 = cv2.boundingRect(contour1)
+    c_x1 = x1 + w1/2
+    c_y1 = y1 + h1/2
 
-    rect2 = cv2.minAreaRect(contour2)
-    box2 = numpy.int0(cv2.boxPoints(rect2))
+    x2, y2, w2, h2 = cv2.boundingRect(contour2)
+    c_x2 = x2 + w2/2
+    c_y2 = y2 + h2/2
 
-    distances = []
-    for point1 in box1:
-        for point2 in box2:
-            distance = cv2.norm(point1, point2)
-            distances.append(distance)
+    return max(abs(c_x1 - c_x2) - (w1 + w2)/2, abs(c_y1 - c_y2) - (h1 + h2)/2)
 
-    return min(distances)
-
-def calculate_contour_area(contour):
-  _, (w, h), _ = cv2.minAreaRect(contour)
-  return w * h
-
-# only keep the biggest ten to make computation faster 
 def take_biggest_contours(contours, max_number=20):
-    sorted_contours = sorted(contours, key=lambda x: calculate_contour_area(x), reverse=True)
+    sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     return sorted_contours[:max_number]
 
-def agglomerative_cluster(contours, threshold_distance=20.0):
+def agglomerative_cluster(contours, threshold_distance=40.0):
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -58,9 +44,72 @@ def agglomerative_cluster(contours, threshold_distance=20.0):
         if min_distance < threshold_distance:
             # merge closest two contours
             index1, index2 = min_coordinate
-            current_contours[index1] = numpy.concatenate((current_contours[index1], current_contours[index2]), axis=0)
+            current_contours[index1] = np.concatenate((current_contours[index1], current_contours[index2]), axis=0)
             del current_contours[index2]
         else: 
             break
 
     return current_contours
+
+def detect_objects(img): 
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    equalized_img = cv2.equalizeHist(gray_img)
+    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
+    edges = cv2.Canny(blurred_img, 90, 180)
+    ret, thresh = cv2.threshold(edges, 127, 255, 0)
+
+    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+    print("contours after findContours: %s" % len(contours))
+
+    contours = take_biggest_contours(contours)
+    print("contours after take_biggest_contours: %s" % len(contours))
+
+    contours = agglomerative_cluster(contours)
+    print("contours after agglomerative_cluster: %s" % len(contours))
+
+    objects = []
+    for c in contours:
+        rect = cv2.boundingRect(c)
+        x, y, w, h = rect
+        
+        # ignore small contours
+        if w < 20 and h < 20:
+            print("dropping rect due to small size", rect)
+            continue
+
+        cropped_img = img[y:y+h, x:x+w].copy()
+        object_tuple = (rect, cropped_img)
+        objects.append(object_tuple)
+    return objects
+
+"""
+Scale down current objects to match with previous objects by template. If match, it's obstacle.
+"""
+def detect_obstacles(previous_objects, current_objects):
+    # downscale current objects to cater occlusion 
+    scales = [0.85, 0.8, 0.75, 0.7, 0.65]
+    obstacle_rects = set()
+    for (rect2, obj2) in current_objects:
+        for (rect1, obj1) in previous_objects:
+            for scale in scales:
+                width = int(obj2.shape[1] * scale)
+                height = int(obj2.shape[0] * scale)
+                scaled_obj2 = cv2.resize(obj2, (width, height), interpolation=cv2.INTER_AREA)
+                if match_by_template(obj1, scaled_obj2):
+                    # inverse scale to make sense of risk level
+                    enlarging_scale = 1/scale
+                    obstacle_rects.add((rect2, enlarging_scale)) 
+                    break
+    return obstacle_rects
+
+def match_by_template(img, template, threshold_score=0.90):
+    i_height, i_width, i_color = img.shape
+    t_height, t_width, t_color = template.shape
+
+    # make sure img is bigger than the template
+    if i_height <= t_height or i_width <= t_width:
+        return False
+
+    result = cv2.matchTemplate(img, template, cv2.TM_CCORR_NORMED)
+    _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
+    return _maxVal > threshold_score
