@@ -18,7 +18,7 @@ class ObstacleAvoidance:
         rect_array = rects_msg.rects
         rospy.loginfo("number of rects received: %s", len(rect_array))
         if len(rect_array) > 0: 
-            rospy.loginfo("first rect", rect_array[0])
+            print("first rect", rect_array[0])
 
 
 def main(args):
