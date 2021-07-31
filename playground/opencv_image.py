@@ -191,6 +191,8 @@ def low_pass_filter(img, frequence_threshold = 50):
     return img_back
 
 if __name__ == '__main__':
+    print("Numpy version: %s" % np.__version__)
+    print("OpenCV version: %s" % cv2.__version__)
     script_path = os.path.dirname(os.path.realpath(__file__))
 
     img_path1 = os.path.join(script_path, 'images/wall_1.jpg')
