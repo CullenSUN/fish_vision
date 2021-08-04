@@ -2,32 +2,34 @@ import cv2
 import os
 from opencv_image import *
 
+SAMPLING_PERIOD = 8
+
 class VideoProcessor:
 
     def __init__(self):
-        self.previous_objects = None
+        self.previous_frame = None
         self.throttling_counter = 0
 
     def increase_counter(self):
         self.throttling_counter += 1
-        if self.throttling_counter >= 5:
+        if self.throttling_counter >= SAMPLING_PERIOD:
             self.throttling_counter = 0
 
     def callback_image(self, img):
-        if self.throttling_counter % 5 != 0:
+        if self.throttling_counter % SAMPLING_PERIOD != 0:
             self.increase_counter()
             return None
 
-        if self.previous_objects is None:
-            self.previous_objects = detect_objects(img)
+        if self.previous_frame is None:
+            self.previous_frame = img
             self.increase_counter()
             return None
         else:
             current_objects = detect_objects(img)
             print("current_objects", len(current_objects))
-            obstacle_rects = detect_obstacles(self.previous_objects, current_objects)
+            obstacle_rects = detect_obstacles(self.previous_frame, current_objects)
             print("confirmed obstacles", len(obstacle_rects))
-            self.previous_objects = current_objects
+            self.previous_frame = img
             self.increase_counter()
             return obstacle_rects
 
