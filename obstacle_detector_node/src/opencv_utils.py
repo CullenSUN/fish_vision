@@ -85,24 +85,26 @@ def detect_objects(img):
 """
 Scale down current objects to match with previous objects by template. If match, it's obstacle.
 """
-def detect_obstacles(previous_objects, current_objects):
+def detect_obstacles(previous_frame, current_objects):
     # downscale current objects to cater occlusion 
-    scales = [0.85, 0.8, 0.75, 0.7, 0.65]
+    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
     obstacle_rects = set()
     for (rect2, obj2) in current_objects:
-        for (rect1, obj1) in previous_objects:
-            for scale in scales:
-                width = int(obj2.shape[1] * scale)
-                height = int(obj2.shape[0] * scale)
-                scaled_obj2 = cv2.resize(obj2, (width, height), interpolation=cv2.INTER_AREA)
-                if match_by_template(obj1, scaled_obj2):
-                    # inverse scale to make sense of risk level
-                    enlarging_scale = 1/scale
-                    obstacle_rects.add((rect2, enlarging_scale)) 
-                    break
+        for scale in scales:
+            width = int(obj2.shape[1] * scale)
+            height = int(obj2.shape[0] * scale)
+            scaled_obj2 = cv2.resize(obj2, (width, height), interpolation=cv2.INTER_AREA)
+            if match_by_template(previous_frame, scaled_obj2):
+                # inverse scale to make sense of risk level
+                enlarging_scale = 1/scale
+                obstacle_rects.add((rect2, enlarging_scale)) 
+                break
     return obstacle_rects
 
-def match_by_template(img, template, threshold_score=0.90):
+"""
+Check if we can find a match for the template in the img. Return True if found, else return False.
+"""
+def match_by_template(img, template, threshold_score=0.95):
     i_height, i_width, i_color = img.shape
     t_height, t_width, t_color = template.shape
 
