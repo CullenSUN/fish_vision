@@ -3,7 +3,7 @@
 import cv2
 import numpy
 from functools import wraps
-import time
+from time import time
 
 def timed(f):
     @wraps(f)
@@ -38,7 +38,7 @@ def take_biggest_contours(contours, max_number=20):
     return sorted_contours[:max_number]
 
 def agglomerative_cluster(contours, threshold_distance=40.0):
-    start = time.time()
+    start = time()
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -61,7 +61,7 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
             del current_contours[index2]
         else: 
             break
-    elapsed = (time.time() - start)
+    elapsed = (time() - start)
     print("dddddd agglomerative_cluster() took ", elapsed, " time to finish")
     return current_contours
 
