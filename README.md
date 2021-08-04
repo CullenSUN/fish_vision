@@ -1,6 +1,6 @@
 # fish_vision
 
-We are building the vision system for a very fast robotic fish. Target to avoid obstacles with the vision. 
+We are building the computer vision system for a very fast robotic fish. Target to avoid obstacles with vision. 
 
 ## Hardware
 - Raspberry Pi 4 (Model B 8GB RAM)
@@ -12,9 +12,9 @@ We are building the vision system for a very fast robotic fish. Target to avoid 
 - OpenCV 3.3.1
 - Numpy 1.11.3
 
-## How to run
-### tools
-- "video_capture.py" can be run in Raspberry Pi for capturing videos continuously.
+## How To Run
+### Tools
+- In "tools" folder, "video_capture.py" can be run in Raspberry Pi for capturing videos continuously.
 
 ### Playgroun
 "playground" folder contains code that has no hardware or OS dependency. Once set up environment with Python 2.7.X, OpenCV 3.3.1, Numpy 1.11.3, you shall be able to run them.   
