@@ -2,6 +2,18 @@
 
 import cv2
 import numpy
+from functools import wraps
+import time
+
+def timed(f):
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        start = time()
+        result = f(*args, **kwds)
+        elapsed = time() - start
+        print "%s took %d time to finish" % (f.__name__, elapsed)
+        return result
+    return wrapper
 
 def resize_image(img, factor):
     width = int(img.shape[1] * factor)
@@ -26,6 +38,7 @@ def take_biggest_contours(contours, max_number=20):
     return sorted_contours[:max_number]
 
 def agglomerative_cluster(contours, threshold_distance=40.0):
+    start = time.time()
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -48,9 +61,11 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
             del current_contours[index2]
         else: 
             break
-
+    elapsed = (time.time() - start)
+    print("dddddd agglomerative_cluster() took ", elapsed, " time to finish")
     return current_contours
 
+@timed
 def detect_objects(img): 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     equalized_img = cv2.equalizeHist(gray_img)
@@ -85,6 +100,7 @@ def detect_objects(img):
 """
 Scale down current objects to match with previous objects by template. If match, it's obstacle.
 """
+@timed
 def detect_obstacles(previous_frame, current_objects):
     # downscale current objects to cater occlusion 
     scales = [0.9, 0.8, 0.7, 0.6, 0.5]
@@ -104,6 +120,7 @@ def detect_obstacles(previous_frame, current_objects):
 """
 Check if we can find a match for the template in the img. Return True if found, else return False.
 """
+@timed
 def match_by_template(img, template, threshold_score=0.95):
     i_height, i_width, i_color = img.shape
     t_height, t_width, t_color = template.shape
