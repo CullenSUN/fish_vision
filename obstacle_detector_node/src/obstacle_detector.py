@@ -31,7 +31,7 @@ class ObstacleDetector:
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback)
         rospy.loginfo("ObstacleDetector subscribed to topic /raspicam_node/image/compressed")
         
-    def _increase_counter(self):
+    def increase_counter(self):
         self.throttling_counter += 1
         if self.throttling_counter >= SAMPLING_PERIOD:
             self.throttling_counter = 0
@@ -39,12 +39,12 @@ class ObstacleDetector:
     def callback(self, data):
         try:
             cv_image = self.bridge.compressed_imgmsg_to_cv2(data)
-            self._process_image(cv_image)
+            self.process_image(cv_image)
         except CvBridgeError as e:
             rospy.logerr("error: %s", e)
 
-    def _process_image(self, img): 
-        detected_obstacles = self._detect_obstacles(img)
+    def process_image(self, img): 
+        detected_obstacles = self.detect_obstacles(img)
         if detected_obstacles is None:
             return 
 
@@ -57,9 +57,9 @@ class ObstacleDetector:
         rospy.loginfo("number of rects published: %s" % len(rects_msg.rects))
         self.obstacles_pub.publish(rects_msg)
 
-    def _detect_obstacles(self, img): 
+    def detect_obstacles(self, img): 
         if self.throttling_counter % SAMPLING_PERIOD != 0:
-            self._increase_counter()
+            self.increase_counter()
             return None
 
         # resize from 1280x720 to 640x360
@@ -67,7 +67,7 @@ class ObstacleDetector:
 
         if self.previous_frame is None:
             self.previous_frame = img
-            self._increase_counter()
+            self.increase_counter()
             return None
         else:
             current_objects = opencv_utils.detect_objects(img)
@@ -75,7 +75,7 @@ class ObstacleDetector:
             obstacle_rects = opencv_utils.detect_obstacles(self.previous_frame, current_objects)
             rospy.loginfo("confirmed obstacles: %s" % len(obstacle_rects))
             self.previous_frame = img
-            self._increase_counter()
+            self.increase_counter()
             return obstacle_rects
 
 def main(args):

@@ -33,18 +33,25 @@ class VisionDebugger:
         self.obstacles_pub = rospy.Subscriber("/obstacle_detector_node/obstacles", RectArray, self.callback_rects)
         rospy.loginfo("VisionDebugger subscribed to topic /obstacle_detector_node/obstacles")
 
-    def _increase_counter(self):
+    def increase_counter(self):
         self.throttling_counter += 1
         if self.throttling_counter >= 5:
             self.throttling_counter = 0
 
+    def resize_image(self, img, factor):
+        width = int(img.shape[1] * factor)
+        height = int(img.shape[0] * factor)
+        dim = (width, height)
+        return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
     def callback_image(self, data):
         if self.throttling_counter % 5 != 0:
-            self._increase_counter()
+            self.increase_counter()
             return
 
         try:
             img = self.bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+            img = self.resize_image(img, 0.5)
         except CvBridgeError as e:
             rospy.logerr("error: %s", e)
 

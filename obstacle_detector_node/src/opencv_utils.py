@@ -11,7 +11,7 @@ def timed(f):
         start = time()
         result = f(*args, **kwds)
         elapsed = time() - start
-        print "%s took %d time to finish" % (f.__name__, elapsed)
+        print "%s took %d milliSeconds to finish" % (f.__name__, elapsed*1000)
         return result
     return wrapper
 
@@ -37,8 +37,8 @@ def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     return sorted_contours[:max_number]
 
+@timed
 def agglomerative_cluster(contours, threshold_distance=40.0):
-    start = time()
     current_contours = contours
     while len(current_contours) > 1:
         min_distance = None
@@ -61,8 +61,6 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
             del current_contours[index2]
         else: 
             break
-    elapsed = (time() - start)
-    print("dddddd agglomerative_cluster() took ", elapsed, " time to finish")
     return current_contours
 
 @timed
