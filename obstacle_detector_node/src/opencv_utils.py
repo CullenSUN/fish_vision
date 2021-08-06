@@ -120,13 +120,15 @@ Check if we can find a match for the template in the img. Return True if found, 
 """
 @timed
 def match_by_template(img, template, threshold_score=0.95):
-    i_height, i_width, i_color = img.shape
-    t_height, t_width, t_color = template.shape
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray_template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+    i_height, i_width = gray_img.shape
+    t_height, t_width = gray_template.shape
 
     # make sure img is bigger than the template
     if i_height <= t_height or i_width <= t_width:
         return False
 
-    result = cv2.matchTemplate(img, template, cv2.TM_CCORR_NORMED)
+    result = cv2.matchTemplate(gray_img, gray_template, cv2.TM_CCORR_NORMED)
     _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
     return _maxVal > threshold_score
