@@ -5,6 +5,18 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import random as rng
+from functools import wraps
+from time import time
+
+def timed(f):
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        start = time()
+        result = f(*args, **kwds)
+        elapsed = time() - start
+        print "%s took %d milliSeconds to finish" % (f.__name__, elapsed*1000)
+        return result
+    return wrapper
 
 def resize_image(img, factor):
     width = int(img.shape[1] * factor)
@@ -29,6 +41,7 @@ def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     return sorted_contours[:max_number]
 
+@timed
 def agglomerative_cluster(contours, threshold_distance=40.0):
     current_contours = contours
     while len(current_contours) > 1:
@@ -55,12 +68,18 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
 
     return current_contours
 
-def detect_objects(img): 
+@timed
+def detect_objects(img, fgMask=None): 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    equalized_img = cv2.equalizeHist(gray_img)
-    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
-    edges = cv2.Canny(blurred_img, 90, 180)
-    ret, thresh = cv2.threshold(edges, 127, 255, 0)
+    if fgMask is None:
+        equalized_img = cv2.equalizeHist(gray_img)
+        blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
+        edges = cv2.Canny(blurred_img, 90, 180)
+        ret, thresh = cv2.threshold(edges, 127, 255, 0)
+    else:
+        blurred_img = cv2.GaussianBlur(fgMask, (9,9), 0)
+        ret, thresh = cv2.threshold(blurred_img, 127, 255, 0)
+
     # saliency = cv2.saliency.StaticSaliencyFineGrained_create()
     # success, saliencyMap = saliency.computeSaliency(blurred_img)
     # ret, thresh = cv2.threshold(saliencyMap.astype("uint8"), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
@@ -124,9 +143,10 @@ def show_contours_with_original_image(img):
 """
 Scale down current objects to match with previous objects by template. If match, it's obstacle.
 """
+@timed
 def detect_obstacles(previous_frame, current_objects):
     # downscale current objects to cater occlusion 
-    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
+    scales = [0.8, 0.7, 0.6]
     obstacle_rects = set()
     for (rect2, obj2) in current_objects:
         for scale in scales:
@@ -140,6 +160,7 @@ def detect_obstacles(previous_frame, current_objects):
                 break
     return obstacle_rects
 
+@timed
 def match_by_template(img, template, threshold_score=0.95):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray_template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)

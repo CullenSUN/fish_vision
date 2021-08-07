@@ -9,11 +9,17 @@ class VideoProcessor:
     def __init__(self):
         self.previous_frame = None
         self.throttling_counter = 0
+        self.backSub = cv2.createBackgroundSubtractorKNN()
 
     def increase_counter(self):
         self.throttling_counter += 1
         if self.throttling_counter >= SAMPLING_PERIOD:
             self.throttling_counter = 0
+
+    def bg_substruction(self, frame):
+        fgMask = self.backSub.apply(frame)
+        cv2.imshow('Frame', frame)
+        cv2.imshow('FG Mask', fgMask)
 
     def callback_image(self, img):
         if self.throttling_counter % SAMPLING_PERIOD != 0:
@@ -51,7 +57,7 @@ if __name__ == '__main__':
         
         img = resize_image(img, 0.5)
         # print('resized dimensions: ', img.shape)
-
+        # processor.bg_substruction(img)
         detected_obstacles = processor.callback_image(img)
         for (rect, scale) in detected_obstacles or []: 
             x, y, w, h = rect
