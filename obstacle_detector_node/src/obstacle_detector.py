@@ -19,14 +19,13 @@ from opencv_apps.msg import Rect
 from cv_bridge import CvBridge, CvBridgeError
 import opencv_utils
 
-SAMPLING_PERIOD = 5
+SAMPLING_PERIOD = 1
 
 class ObstacleDetector:
 
     def __init__(self):
         self.bridge = CvBridge()
         self.throttling_counter = 0
-        self.previous_frame = None
         self.obstacles_pub = rospy.Publisher("/obstacle_detector_node/obstacles", RectArray, queue_size=5)
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback)
         rospy.loginfo("ObstacleDetector subscribed to topic /raspicam_node/image/compressed")
@@ -50,7 +49,7 @@ class ObstacleDetector:
 
         # find bounding_rects
         rects_msg = RectArray()
-        for (rect, scale) in detected_obstacles or []: 
+        for rect in detected_obstacles or []: 
             msg_rect = Rect(*rect)
             rects_msg.rects.append(msg_rect)
 
@@ -64,19 +63,8 @@ class ObstacleDetector:
 
         # resize from 1280x720 to 640x360
         img = opencv_utils.resize_image(img, 0.5)
-
-        if self.previous_frame is None:
-            self.previous_frame = img
-            self.increase_counter()
-            return None
-        else:
-            current_objects = opencv_utils.detect_objects(img)
-            rospy.loginfo("current_objects: %s" % len(current_objects))
-            obstacle_rects = opencv_utils.detect_obstacles(self.previous_frame, current_objects)
-            rospy.loginfo("confirmed obstacles: %s" % len(obstacle_rects))
-            self.previous_frame = img
-            self.increase_counter()
-            return obstacle_rects
+        current_objects = opencv_utils.detect_objects(img)
+        return current_objects
 
 def main(args):
     rospy.init_node('obstacle_detector_node', anonymous=True)

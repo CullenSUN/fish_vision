@@ -21,6 +21,37 @@ def resize_image(img, factor):
     dim = (width, height)
     return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
+@timed
+def detect_objects(img): 
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    equalized_img = cv2.equalizeHist(gray_img)
+    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
+    edges = cv2.Canny(blurred_img, 90, 180)
+    ret, thresh = cv2.threshold(edges, 127, 255, 0)
+
+    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
+    print("contours after findContours: %s" % len(contours))
+
+    contours = take_biggest_contours(contours)
+    print("contours after take_biggest_contours: %s" % len(contours))
+
+    contours = agglomerative_cluster(contours)
+    print("contours after agglomerative_cluster: %s" % len(contours))
+
+    objects = []
+    for c in contours:
+        rect = cv2.boundingRect(c)
+        x, y, w, h = rect
+        
+        # ignore small contours
+        if w < 20 and h < 20:
+            print("dropping rect due to small size", rect)
+            continue
+
+        objects.append(rect)
+    return objects
+
+
 # calculate distance between two contours
 def calculate_contour_distance(contour1, contour2): 
     x1, y1, w1, h1 = cv2.boundingRect(contour1)
@@ -62,73 +93,3 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
         else: 
             break
     return current_contours
-
-@timed
-def detect_objects(img): 
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    equalized_img = cv2.equalizeHist(gray_img)
-    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
-    edges = cv2.Canny(blurred_img, 90, 180)
-    ret, thresh = cv2.threshold(edges, 127, 255, 0)
-
-    img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
-    print("contours after findContours: %s" % len(contours))
-
-    contours = take_biggest_contours(contours)
-    print("contours after take_biggest_contours: %s" % len(contours))
-
-    contours = agglomerative_cluster(contours)
-    print("contours after agglomerative_cluster: %s" % len(contours))
-
-    objects = []
-    for c in contours:
-        rect = cv2.boundingRect(c)
-        x, y, w, h = rect
-        
-        # ignore small contours
-        if w < 20 and h < 20:
-            print("dropping rect due to small size", rect)
-            continue
-
-        cropped_img = img[y:y+h, x:x+w].copy()
-        object_tuple = (rect, cropped_img)
-        objects.append(object_tuple)
-    return objects
-
-"""
-Scale down current objects to match with previous objects by template. If match, it's obstacle.
-"""
-@timed
-def detect_obstacles(previous_frame, current_objects):
-    # downscale current objects to cater occlusion 
-    scales = [0.9, 0.8, 0.7, 0.6, 0.5]
-    obstacle_rects = set()
-    for (rect2, obj2) in current_objects:
-        for scale in scales:
-            width = int(obj2.shape[1] * scale)
-            height = int(obj2.shape[0] * scale)
-            scaled_obj2 = cv2.resize(obj2, (width, height), interpolation=cv2.INTER_AREA)
-            if match_by_template(previous_frame, scaled_obj2):
-                # inverse scale to make sense of risk level
-                enlarging_scale = 1/scale
-                obstacle_rects.add((rect2, enlarging_scale)) 
-                break
-    return obstacle_rects
-
-"""
-Check if we can find a match for the template in the img. Return True if found, else return False.
-"""
-@timed
-def match_by_template(img, template, threshold_score=0.95):
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray_template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-    i_height, i_width = gray_img.shape
-    t_height, t_width = gray_template.shape
-
-    # make sure img is bigger than the template
-    if i_height <= t_height or i_width <= t_width:
-        return False
-
-    result = cv2.matchTemplate(gray_img, gray_template, cv2.TM_CCORR_NORMED)
-    _minVal, _maxVal, minLoc, maxLoc = cv2.minMaxLoc(result, None)
-    return _maxVal > threshold_score
