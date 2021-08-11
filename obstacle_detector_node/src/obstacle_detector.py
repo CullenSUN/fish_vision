@@ -17,7 +17,7 @@ from sensor_msgs.msg import CompressedImage
 from opencv_apps.msg import RectArray
 from opencv_apps.msg import Rect
 from cv_bridge import CvBridge, CvBridgeError
-import opencv_utils
+from opencv_utils import *
 
 SAMPLING_PERIOD = 2
 
@@ -64,8 +64,8 @@ class ObstacleDetector:
             return None
 
         # resize from 1280x720 to 640x360
-        img = opencv_utils.resize_image(img, 0.5)
-        current_objects = opencv_utils.detect_objects(img)
+        img = resize_image(img, 0.5)
+        current_objects = detect_objects(img)
         return current_objects
 
 def main(args):
