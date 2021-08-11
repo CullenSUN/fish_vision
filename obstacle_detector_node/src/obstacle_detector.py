@@ -19,7 +19,7 @@ from opencv_apps.msg import Rect
 from cv_bridge import CvBridge, CvBridgeError
 import opencv_utils
 
-SAMPLING_PERIOD = 1
+SAMPLING_PERIOD = 2
 
 class ObstacleDetector:
 
@@ -42,6 +42,7 @@ class ObstacleDetector:
         except CvBridgeError as e:
             rospy.logerr("error: %s", e)
 
+    @timed
     def process_image(self, img): 
         detected_obstacles = self.detect_obstacles(img)
         if detected_obstacles is None:
@@ -56,6 +57,7 @@ class ObstacleDetector:
         rospy.loginfo("number of rects published: %s" % len(rects_msg.rects))
         self.obstacles_pub.publish(rects_msg)
 
+    @timed
     def detect_obstacles(self, img): 
         if self.throttling_counter % SAMPLING_PERIOD != 0:
             self.increase_counter()
