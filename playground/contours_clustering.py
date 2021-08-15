@@ -7,7 +7,7 @@ import numpy
 def detect_contours(img):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     equalized_img = cv2.equalizeHist(gray_img)
-    blurred_img = cv2.GaussianBlur(equalized_img, (9,9), 0)
+    blurred_img = cv2.GaussianBlur(equalized_img, (9, 9), 0)
     edges = cv2.Canny(blurred_img, 90, 180)
     _, thresh = cv2.threshold(edges, 127, 255, 0)
     img2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_KCOS)
@@ -44,7 +44,6 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
                     min_coordinate = (x, y)
 
         if min_distance < threshold_distance:
-            # merge closest two contours
             index1, index2 = min_coordinate
             current_contours[index1] = merge_contours(current_contours[index1], current_contours[index2])
             del current_contours[index2]
