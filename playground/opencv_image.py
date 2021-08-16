@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import random as rng
 from functools import wraps
 from time import time
+from contours_clustering import *
 
 def timed(f):
     @wraps(f)
@@ -24,49 +25,10 @@ def resize_image(img, factor):
     dim = (width, height)
     return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-# calculate distance between two contours
-def calculate_contour_distance(contour1, contour2): 
-    x1, y1, w1, h1 = cv2.boundingRect(contour1)
-    c_x1 = x1 + w1/2
-    c_y1 = y1 + h1/2
-
-    x2, y2, w2, h2 = cv2.boundingRect(contour2)
-    c_x2 = x2 + w2/2
-    c_y2 = y2 + h2/2
-
-    return max(abs(c_x1 - c_x2) - (w1 + w2)/2, abs(c_y1 - c_y2) - (h1 + h2)/2)
-
 # only keep the biggest tetake_biggest_contoursn to make computation faster 
 def take_biggest_contours(contours, max_number=20):
     sorted_contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     return sorted_contours[:max_number]
-
-@timed
-def agglomerative_cluster(contours, threshold_distance=40.0):
-    current_contours = contours
-    while len(current_contours) > 1:
-        min_distance = None
-        min_coordinate = None
-
-        for x in xrange(len(current_contours)-1):
-            for y in xrange(x+1, len(current_contours)):
-                distance = calculate_contour_distance(current_contours[x], current_contours[y])
-                if min_distance is None:
-                    min_distance = distance
-                    min_coordinate = (x, y)
-                elif distance < min_distance:
-                    min_distance = distance
-                    min_coordinate = (x, y)
-
-        if min_distance < threshold_distance:
-            # merge closest two contours
-            index1, index2 = min_coordinate
-            current_contours[index1] = np.concatenate((current_contours[index1], current_contours[index2]), axis=0)
-            del current_contours[index2]
-        else: 
-            break
-
-    return current_contours
 
 @timed
 def detect_objects(img, fgMask=None): 
@@ -220,9 +182,10 @@ if __name__ == '__main__':
     img_path1 = os.path.join(script_path, 'images/wall_1.jpg')
     img1 = cv2.imread(img_path1)
 
-    # objects1 = detect_objects(img1)
+    # objects1 = show_contours_with_original_image(img1)
     # print("detected objects1, ", len(objects1))
-
+    # exit()
+    
     img_path2 = os.path.join(script_path, 'images/wall_4.jpg')
     img2 = cv2.imread(img_path2)
     objects3 = detect_objects(img2)
