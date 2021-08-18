@@ -17,12 +17,14 @@ import rospy
 from sensor_msgs.msg import CompressedImage
 from opencv_apps.msg import Rect
 from opencv_apps.msg import RectArray
+from cv_bridge import CvBridge, CvBridgeError
 
 WINDOW_NAME = "BREED Fish Vision"
 
 class VisionDebugger:
 
     def __init__(self):
+        self.bridge = CvBridge()
         self.obstacle_rects_buffer = None
         self.throttling_counter = 0
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback_image)
@@ -43,30 +45,29 @@ class VisionDebugger:
         return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
     def callback_image(self, data):
-        return
-        # if self.throttling_counter % 5 != 0:
-        #     self.increase_counter()
-        #     return
+        if self.throttling_counter % 5 != 0:
+            self.increase_counter()
+            return
 
-        # try:
-        #     img = self.bridge.compressed_imgmsg_to_cv2(data, "bgr8")
-        #     img = self.resize_image(img, 0.5)
-        # except CvBridgeError as e:
-        #     rospy.logerr("error: %s", e)
+        try:
+            img = self.bridge.compressed_imgmsg_to_cv2(data, "bgr8")
+            img = self.resize_image(img, 0.5)
+        except CvBridgeError as e:
+            rospy.logerr("error: %s", e)
 
-        # # draw obstacle rects in the image
-        # if self.obstacle_rects_buffer is not None: 
-        #     for rect in self.obstacle_rects_buffer:
-        #         #ignore very small rects
-        #         if rect.width * rect.height < 16.0: continue 
+        # draw obstacle rects in the image
+        if self.obstacle_rects_buffer is not None: 
+            for rect in self.obstacle_rects_buffer:
+                #ignore very small rects
+                if rect.width * rect.height < 16.0: continue 
                 
-        #         start_point = (int(rect.x), int(rect.y))
-        #         end_point = (int(rect.x + rect.width), int(rect.y + rect.height))
-        #         cv2.rectangle(img, start_point, end_point, (0, 255, 0), 2)
+                start_point = (int(rect.x), int(rect.y))
+                end_point = (int(rect.x + rect.width), int(rect.y + rect.height))
+                cv2.rectangle(img, start_point, end_point, (0, 255, 0), 2)
 
-        # cv2.imshow(WINDOW_NAME, img)
-        # cv2.waitKey(24)
-        # self.increase_counter()
+        cv2.imshow(WINDOW_NAME, img)
+        cv2.waitKey(24)
+        self.increase_counter()
 
     def callback_rects(self, rects_msg):
         #print("received obstacle rects %s" % len(rects_msg.rects))
