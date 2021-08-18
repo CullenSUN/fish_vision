@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import cv2
 import numpy
@@ -75,8 +75,8 @@ def agglomerative_cluster(contours, threshold_distance=40.0):
         min_distance = None
         min_coordinate = None
 
-        for x in xrange(len(current_contours)-1):
-            for y in xrange(x+1, len(current_contours)):
+        for x in range(len(current_contours)-1):
+            for y in range(x+1, len(current_contours)):
                 distance = calculate_contour_distance(current_contours[x], current_contours[y])
                 if min_distance is None:
                     min_distance = distance
