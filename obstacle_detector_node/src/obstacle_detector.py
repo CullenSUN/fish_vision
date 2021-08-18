@@ -16,7 +16,6 @@ import rospy
 from sensor_msgs.msg import CompressedImage
 from opencv_apps.msg import RectArray
 from opencv_apps.msg import Rect
-from cv_bridge import CvBridge, CvBridgeError
 from opencv_utils import *
 
 SAMPLING_PERIOD = 2
@@ -24,7 +23,6 @@ SAMPLING_PERIOD = 2
 class ObstacleDetector:
 
     def __init__(self):
-        self.bridge = CvBridge()
         self.throttling_counter = 0
         self.obstacles_pub = rospy.Publisher("/obstacle_detector_node/obstacles", RectArray, queue_size=5)
         self.image_sub = rospy.Subscriber("/raspicam_node/image/compressed", CompressedImage, self.callback)
@@ -36,11 +34,12 @@ class ObstacleDetector:
             self.throttling_counter = 0
 
     def callback(self, data):
-        try:
-            cv_image = self.bridge.compressed_imgmsg_to_cv2(data)
-            self.process_image(cv_image)
-        except CvBridgeError as e:
-            rospy.logerr("error: %s", e)
+        return
+        # try:
+        #     cv_image = self.bridge.compressed_imgmsg_to_cv2(data)
+        #     self.process_image(cv_image)
+        # except CvBridgeError as e:
+        #     rospy.logerr("error: %s", e)
 
     @timed
     def process_image(self, img): 
